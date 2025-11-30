@@ -146,16 +146,16 @@ class BinanceDataProvider:
         
         try:
             # Número de velas necessárias (5min cada)
-            num_candles = minutes // 5
+            num_candles = max(1, minutes // 5)
             
-            if len(klines) < num_candles:
-                num_candles = len(klines)
+            if len(klines) <= num_candles:
+                num_candles = len(klines) - 1
             
             # Preço atual (última vela)
             current_price = klines[-1]['close']
             
             # Preço há X minutos
-            past_price = klines[-num_candles]['close']
+            past_price = klines[-(num_candles + 1)]['close']
             
             if past_price == 0:
                 return 0.0

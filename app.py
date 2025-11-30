@@ -115,11 +115,18 @@ def update_market_data():
                 bot_state['btc_change_15min'] = market_data['change_15min']
                 bot_state['btc_change_5min'] = market_data['change_5min']
                 
+                # Calcular tempo até próxima vela de 5min
+                import datetime
+                now = datetime.datetime.now()
+                seconds_in_5min = now.minute % 5 * 60 + now.second
+                seconds_until_next = 300 - seconds_in_5min
+                bot_state['next_candle_countdown'] = seconds_until_next
+                
                 # Emitir atualização via WebSocket
                 socketio.emit('state_update', {'bot_state': bot_state})
             
-            # Aguardar 5 segundos antes da próxima atualização
-            time.sleep(5)
+            # Aguardar 1 segundo antes da próxima atualização
+            time.sleep(1)
             
         except Exception as e:
             print(f"Erro ao atualizar dados: {e}")
@@ -439,4 +446,4 @@ if __name__ == '__main__':
     print("⚠️  Bot inicia PAUSADO - Clique em 'Iniciar Bot'")
     print("=" * 50)
     
-    socketio.run(app, debug=True, host='127.0.0.1', port=5000, allow_unsafe_werkzeug=True)
+    socketio.run(app, debug=False, host='127.0.0.1', port=5000, allow_unsafe_werkzeug=True)

@@ -182,8 +182,10 @@ class TradeSimulator:
                 'lost': 0,
                 'win_rate': 0,
                 'total_pnl': 0,
+                'total_pnl_percent': 0,
                 'biggest_win': 0,
-                'biggest_loss': 0
+                'biggest_loss': 0,
+                'current_capital': self.capital
             }
         
         won = [t for t in self.closed_trades if t['pnl_dollar'] > 0]
@@ -199,7 +201,7 @@ class TradeSimulator:
             'lost': len(lost),
             'win_rate': (len(won) / len(self.closed_trades) * 100) if self.closed_trades else 0,
             'total_pnl': total_pnl,
-            'total_pnl_percent': (total_pnl / 35.0) * 100,  # Baseado no capital inicial
+            'total_pnl_percent': (total_pnl / 35.0) * 100,
             'biggest_win': biggest_win,
             'biggest_loss': biggest_loss,
             'current_capital': self.capital
