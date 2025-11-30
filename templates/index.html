@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Bot - BTC Scalping</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Linha 1: Portfolio e P&L -->
+        <div class="row">
+            <div class="block" id="portfolio-block">
+                <div class="block-label">Portfolio</div>
+                <div class="block-value" id="portfolio-value" onclick="editPortfolio()">$35.00</div>
+            </div>
+            <div class="block" id="session-pnl-block">
+                <div class="block-label">P&L Sessão</div>
+                <div class="block-value" id="session-pnl">0.00%</div>
+            </div>
+            <div class="block" id="historical-pnl-block">
+                <div class="block-label">P&L Histórico</div>
+                <div class="block-value" id="historical-pnl">0.00%</div>
+            </div>
+            <div class="block" id="real-gain-block">
+                <div class="block-label">Ganho/Perda Real</div>
+                <div class="block-value" id="real-gain">$0.00</div>
+            </div>
+        </div>
+
+        <!-- Linha 2: Estatísticas de Trades -->
+        <div class="row">
+            <div class="block">
+                <div class="block-label">Trades da Sessão</div>
+                <div class="block-value" id="session-trades">0</div>
+            </div>
+            <div class="block" id="trades-won-block">
+                <div class="block-label">Trades Ganhos</div>
+                <div class="block-value" id="trades-won">0</div>
+            </div>
+            <div class="block" id="trades-lost-block">
+                <div class="block-label">Trades Perdidos</div>
+                <div class="block-value" id="trades-lost">0</div>
+            </div>
+            <div class="block" id="biggest-win-block">
+                <div class="block-label">Maior Win</div>
+                <div class="block-value" id="biggest-win">$0.00</div>
+            </div>
+        </div>
+
+        <!-- Linha 3: Informações do Bitcoin -->
+        <div class="row">
+            <div class="block">
+                <div class="block-label">BTC Atual</div>
+                <div class="block-value" id="btc-price">$0.00</div>
+            </div>
+            <div class="block" id="btc-today-block">
+                <div class="block-label">Variação Hoje</div>
+                <div class="block-value" id="btc-today">0.00%</div>
+            </div>
+            <div class="block" id="btc-15min-block">
+                <div class="block-label">Variação 15min</div>
+                <div class="block-value" id="btc-15min">0.00%</div>
+            </div>
+            <div class="block" id="btc-5min-block">
+                <div class="block-label">Variação 5min</div>
+                <div class="block-value" id="btc-5min">0.00%</div>
+            </div>
+        </div>
+
+        <!-- Linha 4: Status e Controles -->
+        <div class="row">
+            <div class="block" style="flex: 2;">
+                <div class="block-label">Status do Bot</div>
+                <div class="block-value status-text" id="bot-status">Aguardando Sinal</div>
+            </div>
+            <div class="block" style="flex: 2;">
+                <div class="block-label">Último Sinal</div>
+                <div class="block-value" id="last-signal">-</div>
+            </div>
+            <div class="block">
+                <div class="block-label">Próxima Vela</div>
+                <div class="block-value" id="next-candle">5:00</div>
+            </div>
+        </div>
+
+        <!-- Controles Manuais -->
+        <div class="row controls-row">
+            <button class="control-btn pause-btn" id="pause-btn" onclick="togglePause()">
+                <span id="pause-icon">⏸</span> Pausar Bot
+            </button>
+            <button class="control-btn close-btn" onclick="closeAllPositions()">
+                ✕ Fechar Todas Posições
+            </button>
+            <button class="control-btn adjust-btn" onclick="editPortfolio()">
+                ⚙ Ajustar Capital
+            </button>
+        </div>
+
+        <!-- Posições Abertas -->
+        <div class="positions-section">
+            <h3>Posições Abertas</h3>
+            <div id="open-positions"></div>
+        </div>
+
+        <!-- Histórico de Trades -->
+        <div class="trades-section">
+            <h3>Histórico de Trades</h3>
+            <div id="trades-history"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
