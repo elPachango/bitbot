@@ -67,10 +67,10 @@ bot_state = {
     'btc_change_today': 0.0,
     'btc_change_15min': 0.0,
     'btc_change_5min': 0.0,
-    'status': 'Aguardando Sinal',
+    'status': 'Bot Pausado - Clique em Iniciar',
     'last_signal': '',
     'next_candle_countdown': 300,
-    'is_paused': False
+    'is_paused': True  # Inicia pausado
 }
 
 open_positions = []
@@ -154,7 +154,12 @@ def update_portfolio():
 def pause_bot():
     """Pausa/Resume o bot"""
     bot_state['is_paused'] = not bot_state['is_paused']
-    bot_state['status'] = 'Pausado' if bot_state['is_paused'] else 'Aguardando Sinal'
+    
+    if bot_state['is_paused']:
+        bot_state['status'] = 'Bot Pausado - Clique em Iniciar'
+    else:
+        bot_state['status'] = 'Bot Ativo - Aguardando Sinal'
+    
     socketio.emit('state_update', {'bot_state': bot_state})
     return jsonify({'success': True, 'is_paused': bot_state['is_paused']})
 
