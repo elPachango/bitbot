@@ -19,7 +19,10 @@ required_files = {
     'templates/index.html': 'Template HTML',
     'static/style.css': 'CSS',
     'static/script.js': 'JavaScript',
-    'app.py': 'Backend Flask'
+    'app.py': 'Backend Flask',
+    'data_provider.py': 'Data Provider',
+    'analyzer.py': 'Analyzer',
+    'trader.py': 'Trader'
 }
 
 all_ok = True
@@ -32,19 +35,13 @@ for file_path, description in required_files.items():
         all_ok = False
 
 if not all_ok:
-    print("\n❌ Arquivos faltando! Execute: python setup_files.py")
+    print("\n❌ Arquivos faltando!")
+    print("Certifique-se de ter todos os arquivos na pasta do projeto.")
     sys.exit(1)
 
 print("\n" + "="*60)
 print("🚀 Iniciando Trading Bot...")
 print("="*60 + "\n")
 
-# Importar e executar o app
-try:
-    from app import app, socketio
-    socketio.run(app, debug=True, host='127.0.0.1', port=5000, allow_unsafe_werkzeug=True)
-except Exception as e:
-    print(f"\n❌ ERRO ao iniciar: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+# Executar app.py diretamente
+os.system('python app.py')
