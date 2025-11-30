@@ -7,15 +7,28 @@ from datetime import datetime, timedelta
 import json
 
 class BinanceDataProvider:
-    def __init__(self):
-        self.base_url = "https://api.binance.com/api/v3"
-        self.symbol = "BTCUSDT"
+    def __init__(self, use_futures=True):
+        """
+        Inicializa o provedor de dados
+        use_futures=True: Usa mercado de futuros/perpetual (mais próximo de dYdX/MEXC)
+        use_futures=False: Usa mercado spot
+        """
+        if use_futures:
+            self.base_url = "https://fapi.binance.com/fapi/v1"  # Futures API
+            self.symbol = "BTCUSDT"  # No futures não precisa do .P
+        else:
+            self.base_url = "https://api.binance.com/api/v3"  # Spot API
+            self.symbol = "BTCUSDT"
+        
         self.interval = "5m"  # 5 minutos
+        self.use_futures = use_futures
         self.cache = {
             'klines': [],
             'last_update': 0,
             'current_price': 0
         }
+        
+        print(f"📊 Usando Binance {'Futures (Perpetual)' if use_futures else 'Spot'}")
     
     def get_current_price(self):
         """Obtém o preço atual do BTC"""
@@ -202,19 +215,19 @@ class BinanceDataProvider:
             }
 
 
-# Instância global
-data_provider = BinanceDataProvider()
+# Instância global - USA FUTURES/PERPETUAL
+data_provider = BinanceDataProvider(use_futures=True)
 
 
 if __name__ == '__main__':
     # Teste
-    print("🧪 Testando Binance Data Provider...\n")
+    print("🧪 Testando Binance Data Provider (Futures)...\n")
     
-    provider = BinanceDataProvider()
+    provider = BinanceDataProvider(use_futures=True)
     
     # Testar preço atual
     price = provider.get_current_price()
-    print(f"💰 Preço atual BTC: ${price:,.2f}")
+    print(f"💰 Preço atual BTC (Perpetual): ${price:,.2f}")
     
     # Testar variação 24h
     change = provider.get_24h_change()

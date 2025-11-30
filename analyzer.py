@@ -10,7 +10,10 @@ class TechnicalAnalyzer:
         self.last_signal_time = None
         
     def calculate_rsi(self, prices, period=14):
-        """Calcula RSI (Relative Strength Index)"""
+        """
+        Calcula RSI (Relative Strength Index) usando EMA
+        Método compatível com TradingView
+        """
         if len(prices) < period + 1:
             return None
         
@@ -18,8 +21,14 @@ class TechnicalAnalyzer:
         gains = np.where(deltas > 0, deltas, 0)
         losses = np.where(deltas < 0, -deltas, 0)
         
+        # Primeira média (SMA)
         avg_gain = np.mean(gains[:period])
         avg_loss = np.mean(losses[:period])
+        
+        # Suavização com EMA (método Wilder)
+        for i in range(period, len(gains)):
+            avg_gain = (avg_gain * (period - 1) + gains[i]) / period
+            avg_loss = (avg_loss * (period - 1) + losses[i]) / period
         
         if avg_loss == 0:
             return 100
@@ -126,8 +135,9 @@ class TechnicalAnalyzer:
         # Extrair preços de fechamento
         closes = [k['close'] for k in klines]
         
-        # Calcular Stoch RSI
-        k, d = self.calculate_stoch_rsi(closes, rsi_period, stoch_period, k_smooth, d_smooth)
+        # Calcular Stoch RSI para a última vela COMPLETA (penúltima, pois última pode estar aberta)
+        closes_complete = closes[:-1]  # Remove a última vela (pode estar aberta)
+        k, d = self.calculate_stoch_rsi(closes_complete, rsi_period, stoch_period, k_smooth, d_smooth)
         
         if k is None or d is None:
             return {
@@ -137,43 +147,61 @@ class TechnicalAnalyzer:
                 'reason': 'Erro no cálculo'
             }
         
-        # Analisar última vela completa (a penúltima no array, pois a última pode estar aberta)
-        last_complete_candle = klines[-2] if len(klines) >= 2 else klines[-1]
-        
-        # Recalcular para a vela anterior para verificar se ficou em oversold/overbought por 1 vela inteira
-        closes_prev = closes[:-1]
+        # Calcular para a vela anterior também (2 velas atrás)
+        closes_prev = closes[:-2]
         k_prev, d_prev = self.calculate_stoch_rsi(closes_prev, rsi_period, stoch_period, k_smooth, d_smooth)
+        
+        # Mostrar apenas análise essencial
+        from datetime import datetime
+        dt_atual = datetime.fromtimestamp(klines[-2]['timestamp'] / 1000)
+        dt_prev = datetime.fromtimestamp(klines[-3]['timestamp'] / 1000)
+        
+        k_prev_str = f"{k_prev:.2f}" if k_prev is not None else "N/A"
+        d_str = f"{d:.2f}" if d is not None else "N/A"
+        
+        print(f"\n📊 [{datetime.now().strftime('%H:%M:%S')}] Stoch RSI Analysis:")
+        print(f"   {dt_prev.strftime('%H:%M')} (vela anterior): K={k_prev_str}")
+        print(f"   {dt_atual.strftime('%H:%M')} (vela atual):    K={k:.2f}, D={d_str}")
         
         signal = None
         reason = 'Aguardando condições'
         
-        # LONG: Stoch RSI estava < 20 por 1 vela inteira
-        if k_prev is not None and k_prev < 20 and k >= 20:
+        # LONG: Stoch RSI estava < 20 na vela anterior
+        if k_prev is not None and k_prev < 20:
             signal = 'LONG'
-            reason = f'Stoch RSI saiu de oversold ({k_prev:.2f} → {k:.2f})'
+            reason = f'Stoch RSI em oversold (prev={k_prev:.2f}, atual={k:.2f})'
+            print(f"   🟢 SINAL LONG detectado!")
         
-        # SHORT: Stoch RSI estava > 80 por 1 vela inteira  
-        elif k_prev is not None and k_prev > 80 and k <= 80:
+        # SHORT: Stoch RSI estava > 80 na vela anterior
+        elif k_prev is not None and k_prev > 80:
             signal = 'SHORT'
-            reason = f'Stoch RSI saiu de overbought ({k_prev:.2f} → {k:.2f})'
+            reason = f'Stoch RSI em overbought (prev={k_prev:.2f}, atual={k:.2f})'
+            print(f"   🔴 SINAL SHORT detectado!")
         
         # Condição de saída LONG: Stoch RSI > 80
         elif k > 80:
             signal = 'EXIT_LONG'
             reason = f'Stoch RSI em overbought ({k:.2f}), sair de LONG'
+            print(f"   📤 EXIT LONG")
         
         # Condição de saída SHORT: Stoch RSI < 20
         elif k < 20:
             signal = 'EXIT_SHORT'
             reason = f'Stoch RSI em oversold ({k:.2f}), sair de SHORT'
+            print(f"   📤 EXIT SHORT")
+        else:
+            print(f"   ⏸ Aguardando sinal (zona neutra)")
+        
+        print()
         
         return {
             'stoch_rsi_k': round(k, 2),
             'stoch_rsi_d': round(d, 2) if d else None,
+            'k_prev': round(k_prev, 2) if k_prev else None,
             'signal': signal,
             'reason': reason,
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'price': klines[-1]['close']
+            'price': klines[-2]['close']  # Preço da última vela COMPLETA
         }
     
     def check_entry_conditions(self, klines, signal_type):

@@ -352,6 +352,47 @@ def get_state():
         'historical_trades': load_trades()
     })
 
+@app.route('/api/debug/stochrsi')
+def debug_stochrsi():
+    """Endpoint de debug para verificar Stoch RSI"""
+    if not (DATA_PROVIDER_AVAILABLE and ANALYZER_AVAILABLE):
+        return jsonify({'error': 'Módulos não disponíveis'})
+    
+    try:
+        # Obter últimas 100 velas
+        klines = data_provider.get_latest_klines(limit=100)
+        
+        if not klines:
+            return jsonify({'error': 'Sem dados'})
+        
+        # Analisar
+        analysis = analyzer.analyze_klines(klines)
+        
+        # Retornar últimas 20 velas + análise
+        recent_klines = klines[-20:]
+        
+        return jsonify({
+            'analysis': analysis,
+            'recent_candles': [
+                {
+                    'timestamp': k['timestamp'],
+                    'close': k['close'],
+                    'open': k['open'],
+                    'high': k['high'],
+                    'low': k['low']
+                }
+                for k in recent_klines
+            ],
+            'parameters': {
+                'rsi_period': 15,
+                'stoch_period': 5,
+                'k_smooth': 3,
+                'd_smooth': 3
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
 @app.route('/api/update_portfolio', methods=['POST'])
 def update_portfolio():
     """Atualiza valor do portfolio"""
