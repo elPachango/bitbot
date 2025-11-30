@@ -4,6 +4,16 @@ import json
 import os
 import sys
 from datetime import datetime
+import threading
+import time
+
+# Importar data provider
+try:
+    from data_provider import data_provider
+    DATA_PROVIDER_AVAILABLE = True
+except ImportError:
+    print("⚠️  data_provider.py não encontrado. Dados reais desabilitados.")
+    DATA_PROVIDER_AVAILABLE = False
 
 # Garantir que estamos no diretório correto
 if hasattr(sys, 'frozen'):
@@ -64,6 +74,46 @@ bot_state = {
 }
 
 open_positions = []
+
+# Thread para atualizar dados em tempo real
+update_thread = None
+update_running = False
+
+def update_market_data():
+    """Thread que atualiza dados de mercado continuamente"""
+    global bot_state, update_running
+    
+    while update_running:
+        try:
+            if DATA_PROVIDER_AVAILABLE:
+                # Obter dados atualizados
+                market_data = data_provider.get_market_data()
+                
+                # Atualizar estado
+                bot_state['btc_price'] = market_data['price']
+                bot_state['btc_change_today'] = market_data['change_24h']
+                bot_state['btc_change_15min'] = market_data['change_15min']
+                bot_state['btc_change_5min'] = market_data['change_5min']
+                
+                # Emitir atualização via WebSocket
+                socketio.emit('state_update', {'bot_state': bot_state})
+            
+            # Aguardar 5 segundos antes da próxima atualização
+            time.sleep(5)
+            
+        except Exception as e:
+            print(f"Erro ao atualizar dados: {e}")
+            time.sleep(10)
+
+def start_market_updates():
+    """Inicia thread de atualização de dados"""
+    global update_thread, update_running
+    
+    if not update_running and DATA_PROVIDER_AVAILABLE:
+        update_running = True
+        update_thread = threading.Thread(target=update_market_data, daemon=True)
+        update_thread.start()
+        print("✅ Atualização de dados em tempo real iniciada")
 
 def load_trades():
     """Carrega histórico de trades"""
@@ -127,6 +177,9 @@ def close_all_positions():
 @socketio.on('connect')
 def handle_connect():
     """Cliente conectado"""
+    # Iniciar atualizações se ainda não iniciou
+    start_market_updates()
+    
     emit('state_update', {
         'bot_state': bot_state,
         'open_positions': open_positions,
@@ -137,5 +190,14 @@ if __name__ == '__main__':
     print("=" * 50)
     print("🚀 Trading Bot iniciado!")
     print("📊 Acesse: http://localhost:5000")
+    
+    if DATA_PROVIDER_AVAILABLE:
+        print("✅ Binance API conectada")
+        # Carregar dados históricos
+        print("⏳ Carregando dados históricos...")
+        data_provider.get_historical_klines(days=30)
+    else:
+        print("⚠️  Binance API não disponível (instale 'requests')")
+    
     print("=" * 50)
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
+    socketio.run(app, debug=True, host='127.0.0.1', port=5000, allow_unsafe_werkzeug=True)

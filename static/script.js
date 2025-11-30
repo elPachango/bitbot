@@ -36,6 +36,7 @@ function updateUI() {
     updateLine4();
     updateOpenPositions();
     updateTradesHistory();
+    updateBotButton(!botState.is_paused);
 }
 
 function updateLine1() {
@@ -207,17 +208,24 @@ function editPortfolio() {
     }
 }
 
-function togglePause() {
+function toggleBot() {
     fetch('/api/pause', { method: 'POST' })
         .then(res => res.json())
         .then(data => {
-            const btn = document.getElementById('pause-btn');
-            if (data.is_paused) {
-                btn.innerHTML = '<span id="pause-icon">▶</span> Resumir Bot';
-            } else {
-                btn.innerHTML = '<span id="pause-icon">⏸</span> Pausar Bot';
-            }
+            updateBotButton(!data.is_paused);
         });
+}
+
+function updateBotButton(isRunning) {
+    const btn = document.getElementById('start-btn');
+    
+    if (isRunning) {
+        btn.classList.add('running');
+        btn.innerHTML = '<span id="start-icon">⏸</span> Pausar Bot';
+    } else {
+        btn.classList.remove('running');
+        btn.innerHTML = '<span id="start-icon">▶</span> Iniciar Bot';
+    }
 }
 
 function closeAllPositions() {

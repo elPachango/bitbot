@@ -9,6 +9,12 @@
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="title">BitBot 0.1 Alpha</h1>
+            <p class="subtitle">Bitcoin auto trading bot</p>
+        </div>
+
         <!-- Linha 1: Portfolio e P&L -->
         <div class="row">
             <div class="block" id="portfolio-block">
@@ -87,14 +93,11 @@
 
         <!-- Controles Manuais -->
         <div class="row controls-row">
-            <button class="control-btn pause-btn" id="pause-btn" onclick="togglePause()">
-                <span id="pause-icon">⏸</span> Pausar Bot
+            <button class="control-btn start-btn" id="start-btn" onclick="toggleBot()">
+                <span id="start-icon">▶</span> Iniciar Bot
             </button>
             <button class="control-btn close-btn" onclick="closeAllPositions()">
                 ✕ Fechar Todas Posições
-            </button>
-            <button class="control-btn adjust-btn" onclick="editPortfolio()">
-                ⚙ Ajustar Capital
             </button>
         </div>
 
